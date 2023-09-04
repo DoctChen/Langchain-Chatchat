@@ -17,7 +17,7 @@ import os
 from urllib.parse import urlencode
 from server.knowledge_base.kb_doc_api import search_docs
 
-
+# 知识库对话的源码
 def knowledge_base_chat(query: str = Body(..., description="用户输入", examples=["你好"]),
                         knowledge_base_name: str = Body(..., description="知识库名称", examples=["samples"]),
                         top_k: int = Body(VECTOR_SEARCH_TOP_K, description="匹配向量数"),

@@ -21,7 +21,7 @@ class OpenAiChatMsgIn(BaseModel):
     presence_penalty: int = 0
     frequency_penalty: int = 0
 
-
+# openai对话源码
 async def openai_chat(msg: OpenAiChatMsgIn):
     openai.api_key = llm_model_dict[LLM_MODEL]["api_key"]
     print(f"{openai.api_key=}")

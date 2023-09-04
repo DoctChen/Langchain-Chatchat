@@ -11,7 +11,7 @@ from langchain.prompts.chat import ChatPromptTemplate
 from typing import List
 from server.chat.utils import History
 
-
+# 大模型对话源码
 def chat(query: str = Body(..., description="用户输入", examples=["恼羞成怒"]),
          history: List[History] = Body([],
                                        description="历史对话",
