@@ -77,19 +77,19 @@ def list_files_from_db(session, kb_name):
 @with_session
 def add_file_to_db(session,
                 kb_file: KnowledgeFile,
-                docs_count: int = 0,
+                docs_count: int = 0, # 切割的数量 docs大小 17
                 custom_docs: bool = False,
                 doc_infos: List[str] = [], # 形式：[{"id": str, "metadata": dict}, ...]
                 ):
-    kb = session.query(KnowledgeBaseModel).filter_by(kb_name=kb_file.kb_name).first()
+    kb = session.query(KnowledgeBaseModel).filter_by(kb_name=kb_file.kb_name).first() # kb = <KnowledgeBase(id='2', kb_name='langchain', vs_type='milvus', embed_model='m3e-base', file_count='1', create_time='2023-09-05 10:18:59')>
     if kb:
-        # 如果已经存在该文件，则更新文件信息与版本号
+        # 如果已经存在该文件，则更新文件信息与版本号  session是什么？是对话窗口中：知识库中包含源文件与向量库，请从下表中选择文件后操作  这个框里的数据
         existing_file: KnowledgeFileModel = (session.query(KnowledgeFileModel)
                                              .filter_by(file_name=kb_file.filename,
                                                         kb_name=kb_file.kb_name)
                                             .first())
-        mtime = kb_file.get_mtime()
-        size = kb_file.get_size()
+        mtime = kb_file.get_mtime() # 获取文件上传时间
+        size = kb_file.get_size() # 获取文件大小 单位B
 
         if existing_file:
             existing_file.file_mtime = mtime
@@ -97,8 +97,8 @@ def add_file_to_db(session,
             existing_file.docs_count = docs_count
             existing_file.custom_docs = custom_docs
             existing_file.file_version += 1
-        # 否则，添加新文件
-        else:
+        # 否则，添加新文件 也是渲染·按session的
+        else: # new_file = <KnowledgeFile(id='None', file_name='8月报.txt', file_ext='.txt', kb_name='langchain', document_loader_name='UnstructuredFileLoader', text_splitter_name='SpacyTextSplitter', file_version='None', create_time='None')>
             new_file = KnowledgeFileModel(
                 file_name=kb_file.filename,
                 file_ext=kb_file.ext,

@@ -77,20 +77,32 @@ class KBService(ABC):
         status = delete_kb_from_db(self.kb_name)
         return status
 
+    # 本地矢量知识库添加文件信息
     def add_doc(self, kb_file: KnowledgeFile, docs: List[Document] = [], **kwargs):
         """
         向知识库添加文件
         如果指定了docs，则不再将文本向量化，并将数据库对应条目标为custom_docs=True
         """
         if docs:
+            # 如果是docs说明是通用文档
             custom_docs = True
         else:
+            # 文件转txt并切割chunk
             docs = kb_file.file2text()
             custom_docs = False
-
+        # 切割后如果docs有值，就去找下矢量库中如果存在相同文件路径的向量文本，就给删除，重新生成
         if docs:
             self.delete_doc(kb_file)
-            doc_infos = self.do_add_doc(docs, **kwargs)
+            '''
+            # doc_infos = [{'id': 443864559035945399, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}, 
+            {'id': 443864559035945400, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}, 
+            {'id': 443864559035945401, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}, 
+            {'id': 443864559035945402, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}, 
+            {'id': 443864559035945403, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}, 
+            {'id': 443864559035945404, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}, 
+            {'id': 443864559035945405, 'metadata': {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}}....]
+            '''
+            doc_infos = self.do_add_doc(docs, **kwargs)  # 核心逻辑
             status = add_file_to_db(kb_file,
                                     custom_docs=custom_docs,
                                     docs_count=len(docs),
@@ -104,7 +116,7 @@ class KBService(ABC):
         从知识库删除文件
         """
         self.do_delete_doc(kb_file, **kwargs)
-        status = delete_file_from_db(kb_file)
+        status = delete_file_from_db(kb_file) # 删除会话窗口中的相同文件，重新生成文件
         if delete_content and os.path.exists(kb_file.filepath):
             os.remove(kb_file.filepath)
         return status
@@ -120,7 +132,7 @@ class KBService(ABC):
 
     def exist_doc(self, file_name: str):
         return file_exists_in_db(KnowledgeFile(knowledge_base_name=self.kb_name,
-                                        filename=file_name))
+                                               filename=file_name))
 
     def list_files(self):
         return list_files_from_db(self.kb_name)

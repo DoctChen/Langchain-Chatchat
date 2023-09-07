@@ -43,15 +43,16 @@ async def list_files(
         all_doc_names = kb.list_files()
         return ListResponse(data=all_doc_names)
 
-
+# 重点源码，传文件
 async def upload_doc(file: UploadFile = File(..., description="上传文件"),
                      knowledge_base_name: str = Form(..., description="知识库名称", examples=["kb1"]),
                      override: bool = Form(False, description="覆盖已有文件"),
                      not_refresh_vs_cache: bool = Form(False, description="暂不保存向量库（用于FAISS）"),
                      ) -> BaseResponse:
+    # 如果有DDOS攻击
     if not validate_kb_name(knowledge_base_name):
         return BaseResponse(code=403, msg="Don't attack me")
-
+    # 获取知识库的工厂对象 <server.knowledge_base.kb_service.milvus_kb_service.MilvusKBService object at 0x000002B1E07DDBA0>
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
         return BaseResponse(code=404, msg=f"未找到知识库 {knowledge_base_name}")
@@ -59,9 +60,10 @@ async def upload_doc(file: UploadFile = File(..., description="上传文件"),
     file_content = await file.read()  # 读取上传文件的内容
 
     try:
+        # 获取知识库文件的实体对象
         kb_file = KnowledgeFile(filename=file.filename,
                                 knowledge_base_name=knowledge_base_name)
-
+        # 如果当前文件存在
         if (os.path.exists(kb_file.filepath)
                 and not override
                 and os.path.getsize(kb_file.filepath) == len(file_content)
@@ -69,7 +71,7 @@ async def upload_doc(file: UploadFile = File(..., description="上传文件"),
             # TODO: filesize 不同后的处理
             file_status = f"文件 {kb_file.filename} 已存在。"
             return BaseResponse(code=404, msg=file_status)
-
+        # 然后直接打开文件读取，写到本地
         with open(kb_file.filepath, "wb") as f:
             f.write(file_content)
     except Exception as e:
@@ -77,6 +79,7 @@ async def upload_doc(file: UploadFile = File(..., description="上传文件"),
         return BaseResponse(code=500, msg=f"{kb_file.filename} 文件上传失败，报错信息为: {e}")
 
     try:
+        # 建立向量数据的核心逻辑
         kb.add_doc(kb_file, not_refresh_vs_cache=not_refresh_vs_cache)
     except Exception as e:
         print(e)

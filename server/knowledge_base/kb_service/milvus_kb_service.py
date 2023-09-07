@@ -63,16 +63,18 @@ class MilvusKBService(KBService):
         return score_threshold_process(score_threshold, top_k, self.milvus.similarity_search_with_score(query, top_k))
 
     def do_add_doc(self, docs: List[Document], **kwargs) -> List[Dict]:
-        ids = self.milvus.add_documents(docs)
+        ids = self.milvus.add_documents(docs)  # 这一步把切割后的文本数据，插入到milvus中，生成矢量数据
+        # metadata = {'source': 'E:\\AI\\Langchain-Chatchat\\knowledge_base\\langchain\\content\\8月报.txt'}
         doc_infos = [{"id": id, "metadata": doc.metadata} for id, doc in zip(ids, docs)]
         return doc_infos
 
     def do_delete_doc(self, kb_file: KnowledgeFile, **kwargs):
         if self.milvus.col:
+            #  filepath = 'E:\\\\AI\\\\Langchain-Chatchat\\\\knowledge_base\\\\langchain\\\\content\\\\8月报.txt'
             filepath = kb_file.filepath.replace('\\', '\\\\')
             delete_list = [item.get("pk") for item in
-                           self.milvus.col.query(expr=f'source == "{filepath}"', output_fields=["pk"])]
-            self.milvus.col.delete(expr=f'pk in {delete_list}')
+                           self.milvus.col.query(expr=f'source == "{filepath}"', output_fields=["pk"])] # 这里是找到相同路径的文件，删除掉相关的信息
+            self.milvus.col.delete(expr=f'pk in {delete_list}')  # py 模板字符串 f-string 表达式
 
     def do_clear_vs(self):
         if self.milvus.col:
